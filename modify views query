@@ -1,0 +1,29 @@
+function modulename_views_pre_execute(&$view) {
+    if ($view->name  =="viewname") {
+        global $user;
+        $userid = $user->uid;
+
+        $subquery = db_select('users_roles', 'squr');
+        $subquery->fields('squr');
+        $subquery->where('squr.uid = u.uid');
+        $subquery->where('squr.rid IN (6,8,9)');
+
+        $custom_query = db_select('users', 'u');
+        $custom_query->join('users_roles', 'ur', 'u.uid = ur.uid AND ur.rid = 5');
+        $custom_query->addField('u', 'uid');
+        $custom_query->addExpression("'user'",
+            'field_data_field_user_image_user_entity_type');
+        $custom_query->addExpression("'user'",
+            'field_data_field_user_allnames_user_entity_type');
+        // Three more addExpression lines here, copied directly
+        // from what Devel showed us was the original query
+        $custom_query->where('u.status = 1');
+        $custom_query->condition('u.uid', $userid, '!=');
+        $custom_query->notExists($subquery);
+        $custom_query->orderBy('NULL');
+        //$custom_query->range(5, 10);    // Testing LIMIT and OFFSET
+
+        //drupal_set_message($userid.' into '.$custom_query->__toString());
+        $view->build_info['query'] = $custom_query;
+    }
+}
